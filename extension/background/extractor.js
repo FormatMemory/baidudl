@@ -133,15 +133,17 @@ function Extractor(file)
 
 		// init filtering
 		var filtered = [];
-		var promises = hlinks.map(function(e, i){
+		var promises = hlinks.map(function(url, idx){
 			var func = function(){
 				log('Trying...');
 				var promise = $.ajax({
-					url: e,
+					url: url,
 					type: 'HEAD',
 					timeout: 3000,
 					success: function(res, status, request){
-						filtered[i] = e;
+						var ret_url = request.getResponseHeader('url');
+						if(!ret_url)return;
+						filtered[idx] = url;
 
 						// if md5 exists in response, update md5
 						var md5 = request.getResponseHeader('Content-MD5');
@@ -232,10 +234,10 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 // catch error when doing link filtering
 chrome.webRequest.onHeadersReceived.addListener(
 	function(details){
-		var bad_codes = [400, 403, 406, 503];
+		var bad_codes = [400, 401, 403, 406, 503];
 		if(bad_codes.indexOf(details.statusCode) >= 0){
-			// drop packet if status code is bad
-			return {redirectUrl: 'javascript:'}; // jshint ignore:line
+			// redirect a dummy url to suppress the error message
+			return {redirectUrl: 'https://www.baidu.com'};
 		}
 		else if(details.statusCode == 302){
 			// get redirect url
@@ -245,8 +247,9 @@ chrome.webRequest.onHeadersReceived.addListener(
 			var url = new URL(header.value);
 
 			// drop packet if we know we are going to 401 or 403
-			if(url.pathname == '/401.html')return {redirectUrl: 'javascript:'};// jshint ignore:line
-			if(url.pathname == '/403.html')return {redirectUrl: 'javascript:'};// jshint ignore:line
+			// FIXME: currently this just doesn't work because of a chrome bug
+			if(url.pathname == '/401.html')return {redirectUrl: 'https://www.baidu.com'};
+			if(url.pathname == '/403.html')return {redirectUrl: 'https://www.baidu.com'};
 
 			// otherwise, we let the packet pass through
 			return {'responseHeaders': details.responseHeaders};
