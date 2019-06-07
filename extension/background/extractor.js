@@ -218,7 +218,8 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 		var headers = details.requestHeaders;
 		for(var i=0; i<headers.length; i++){
 			if(headers[i].name == 'User-Agent'){
-				headers[i].value = navigator.userAgent;
+				//headers[i].value = navigator.userAgent;
+				headers[i].value = 'netdisk;2.2.2;macbaiduyunguanjia';
 			}
 		}
 		return {'requestHeaders': headers};
@@ -259,19 +260,20 @@ chrome.webRequest.onHeadersReceived.addListener(
 	['blocking', 'responseHeaders']
 );
 
-//chrome.webRequest.onBeforeSendHeaders.addListener(
-//	function(details){
-//		var headers = details.requestHeaders;
-//		var index = -1;
-//		for(var i=0; i<headers.length; i++){
-//			if(headers[i].name == 'User-Agent'){
-//				index = i;
-//				headers[index].value = 'netdisk;2.2.0;macbaiduyunguanjia';
-//				break;
-//			}
-//		}
-//		return {'requestHeaders': headers};
-//	},
-//	{urls: ['*://d.pcs.baidu.com/rest/2.0/pcs/file?*']},
-//	['blocking', 'requestHeaders']
-//);
+// replace user-agent with baiduguanjia's user-agent to bypass user-filtering
+chrome.webRequest.onBeforeSendHeaders.addListener(
+	function(details){
+		var headers = details.requestHeaders;
+		var index = -1;
+		for(var i=0; i<headers.length; i++){
+			if(headers[i].name == 'User-Agent'){
+				index = i;
+				headers[index].value = 'netdisk;2.2.2;macbaiduyunguanjia';
+				break;
+			}
+		}
+		return {'requestHeaders': headers};
+	},
+	{urls: ['*://c.pcs.baidu.com/rest/2.0/pcs/file?*', '*://d.pcs.baidu.com/rest/2.0/pcs/file?*']},
+	['blocking', 'requestHeaders']
+);
