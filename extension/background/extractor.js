@@ -128,7 +128,6 @@ function Extractor(file)
 		if(config.mode == 'rpc')self.__all_filterHLinks__(hlinks, cb);
 		else self.__fast_filterHLinks__(hlinks, cb);
 	};
-
 	self.__fast_filterHLinks__ = function(hlinks, cb){
 		log('look for the first successful hlink');
 
@@ -174,7 +173,6 @@ function Extractor(file)
 			});
 		});
 	};
-
 	self.__all_filterHLinks__ = function(hlinks, cb){
 		log('filter hlinks for rpc download');
 
@@ -204,13 +202,14 @@ function Extractor(file)
 			cb(filtered);
 		});
 	};
-
 	self.__init__ = function(file){
 		self.file = file;
 		self.parsed_glink = new URL(file.glink);
 	};
 	self.__init__(file);
 }
+
+/* Chrome webRequest handlers */
 
 // remove cookie when sending requests
 chrome.webRequest.onBeforeSendHeaders.addListener(

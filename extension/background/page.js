@@ -351,12 +351,9 @@ function FileList(fileList)
 		log('updating glink list');
 		fileList.forEach(function(e){
 			var idx = self.fsidList.indexOf(e.fs_id);
-			if(e.dlink){
-				var url = new URL(e.dlink);
-				self.fileList[idx].glink = url.href;
-			}else{
-				self.fileList[idx].glink = e.dlink;
-			}
+			self.fileList[idx].name = e.server_filename;
+			self.fileList[idx].path = e.path;
+			self.fileList[idx].glink = e.dlink;
 			self.fileList[idx].size = e.size;
 		});
 	};
