@@ -24,8 +24,9 @@ function DownloadManager(file)
 			options['check-integrity'] = 'true';
 		}
 		options['max-connection-per-server'] = '16';
-		options['user-agent'] = navigator.userAgent;
+		//options['user-agent'] = navigator.userAgent;
 		//options['user-agent'] = 'netdisk;2.2.2;pc;pc-mac;10.13.6;macbaiduyunguanjia';
+		options['user-agent'] = 'netdisk;2.2.2;macbaiduyunguanjia';
 		options['check-certificate'] = 'false';
 		options['min-split-size'] = '1m';
 		if(self.file.size <= 1024*1024*10){

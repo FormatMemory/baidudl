@@ -351,12 +351,9 @@ function FileList(fileList)
 		log('updating glink list');
 		fileList.forEach(function(e){
 			var idx = self.fsidList.indexOf(e.fs_id);
-			if(e.dlink){
-				var url = new URL(e.dlink);
-				self.fileList[idx].glink = url.href;
-			}else{
-				self.fileList[idx].glink = e.dlink;
-			}
+			self.fileList[idx].name = e.server_filename;
+			self.fileList[idx].path = e.path;
+			self.fileList[idx].glink = e.dlink;
 			self.fileList[idx].size = e.size;
 		});
 	};
@@ -390,12 +387,18 @@ function Error(errno)
 					updatePopup();
 				}
 			});
-		}else{
+		}else if(self.errno == 118)log("no download privilege");
+		else if(self.errno == -3)log("this is not your file, you cannot share it");
+		else if(self.errno == 110)log("share too frequently");
+		else if(self.errno == 115)log("this file is not allowed to be shared");
+		else{
 			log('errno: '+self.errno);
 		}
+
 	};
 	// 2:	wrong parameters
-	// 118: no download priviledge
+	// 118: no download privilege
 	// -3:	not your file
 	// 110: share to frequently
+	// 115: file is not allowed to be shared
 }

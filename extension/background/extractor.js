@@ -128,21 +128,22 @@ function Extractor(file)
 		if(config.mode == 'rpc')self.__all_filterHLinks__(hlinks, cb);
 		else self.__fast_filterHLinks__(hlinks, cb);
 	};
-
 	self.__fast_filterHLinks__ = function(hlinks, cb){
 		log('look for the first successful hlink');
 
 		// init filtering
 		var filtered = [];
-		var promises = hlinks.map(function(e, i){
+		var promises = hlinks.map(function(url, idx){
 			var func = function(){
 				log('Trying...');
 				var promise = $.ajax({
-					url: e,
+					url: url,
 					type: 'HEAD',
 					timeout: 3000,
 					success: function(res, status, request){
-						filtered[i] = e;
+						var ret_url = request.getResponseHeader('url');
+						if(!ret_url)return;
+						filtered[idx] = url;
 
 						// if md5 exists in response, update md5
 						var md5 = request.getResponseHeader('Content-MD5');
@@ -174,7 +175,6 @@ function Extractor(file)
 			});
 		});
 	};
-
 	self.__all_filterHLinks__ = function(hlinks, cb){
 		log('filter hlinks for rpc download');
 
@@ -204,7 +204,6 @@ function Extractor(file)
 			cb(filtered);
 		});
 	};
-
 	self.__init__ = function(file){
 		self.file = file;
 		self.parsed_glink = new URL(file.glink);
@@ -212,13 +211,16 @@ function Extractor(file)
 	self.__init__(file);
 }
 
+/* Chrome webRequest handlers */
+
 // remove cookie when sending requests
 chrome.webRequest.onBeforeSendHeaders.addListener(
 	function(details){
 		var headers = details.requestHeaders;
 		for(var i=0; i<headers.length; i++){
 			if(headers[i].name == 'User-Agent'){
-				headers[i].value = navigator.userAgent;
+				//headers[i].value = navigator.userAgent;
+				headers[i].value = 'netdisk;2.2.2;macbaiduyunguanjia';
 			}
 		}
 		return {'requestHeaders': headers};
@@ -232,10 +234,10 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 // catch error when doing link filtering
 chrome.webRequest.onHeadersReceived.addListener(
 	function(details){
-		var bad_codes = [400, 403, 406, 503];
+		var bad_codes = [400, 401, 403, 406, 503];
 		if(bad_codes.indexOf(details.statusCode) >= 0){
-			// drop packet if status code is bad
-			return {redirectUrl: 'javascript:'};
+			// redirect a dummy url to suppress the error message
+			return {redirectUrl: 'https://www.baidu.com'};
 		}
 		else if(details.statusCode == 302){
 			// get redirect url
@@ -245,8 +247,9 @@ chrome.webRequest.onHeadersReceived.addListener(
 			var url = new URL(header.value);
 
 			// drop packet if we know we are going to 401 or 403
-			if(url.pathname == '/401.html')return {redirectUrl: 'javascript:'};
-			if(url.pathname == '/403.html')return {redirectUrl: 'javascript:'};
+			// FIXME: currently this just doesn't work because of a chrome bug
+			if(url.pathname == '/401.html')return {redirectUrl: 'https://www.baidu.com'};
+			if(url.pathname == '/403.html')return {redirectUrl: 'https://www.baidu.com'};
 
 			// otherwise, we let the packet pass through
 			return {'responseHeaders': details.responseHeaders};
@@ -259,19 +262,20 @@ chrome.webRequest.onHeadersReceived.addListener(
 	['blocking', 'responseHeaders']
 );
 
-//chrome.webRequest.onBeforeSendHeaders.addListener(
-//	function(details){
-//		var headers = details.requestHeaders;
-//		var index = -1;
-//		for(var i=0; i<headers.length; i++){
-//			if(headers[i].name == 'User-Agent'){
-//				index = i;
-//				headers[index].value = 'netdisk;2.2.0;macbaiduyunguanjia';
-//				break;
-//			}
-//		}
-//		return {'requestHeaders': headers};
-//	},
-//	{urls: ['*://d.pcs.baidu.com/rest/2.0/pcs/file?*']},
-//	['blocking', 'requestHeaders']
-//);
+// replace user-agent with baiduguanjia's user-agent to bypass user-filtering
+chrome.webRequest.onBeforeSendHeaders.addListener(
+	function(details){
+		var headers = details.requestHeaders;
+		var index = -1;
+		for(var i=0; i<headers.length; i++){
+			if(headers[i].name == 'User-Agent'){
+				index = i;
+				headers[index].value = 'netdisk;2.2.2;macbaiduyunguanjia';
+				break;
+			}
+		}
+		return {'requestHeaders': headers};
+	},
+	{urls: ['*://c.pcs.baidu.com/rest/2.0/pcs/file?*', '*://d.pcs.baidu.com/rest/2.0/pcs/file?*']},
+	['blocking', 'requestHeaders']
+);
